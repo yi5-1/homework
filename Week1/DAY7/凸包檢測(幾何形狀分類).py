@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 # 1. 建立 VideoCapture 物件
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(0)
 
 if not cap.isOpened():
     print("錯誤：無法開啟視訊鏡頭。")
