@@ -1,0 +1,4 @@
+aiohttp
+# 若做帳號版（PostgreSQL）再加：
+# asyncpg
+# python-dotenv

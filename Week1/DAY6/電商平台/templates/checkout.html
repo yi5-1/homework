@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}結帳{% endblock %}
+{% block content %}
+<section class="section">
+    <h1>📋 結帳</h1>
+    <div id="checkout-content">
+        <p>載入訂單摘要中...</p>
+    </div>
+    <button id="btn-place-order" class="btn btn-primary btn-lg" onclick="placeOrder()" style="display:none">確認下單</button>
+    <div id="order-result" style="margin-top:1rem"></div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function loadCheckout() {
+        fetch('/api/cart')
+            .then(r => r.json())
+            .then(data => {
+                const el = document.getElementById('checkout-content');
+                if (!data.ok) {
+                    el.innerHTML = '<p>請先登入</p>';
+                    return;
+                }
+                if (data.items.length === 0) {
+                    el.innerHTML = '<p>購物車是空的</p>';
+                    return;
+                }
+                el.innerHTML = `
+                    <table class="cart-table">
+                        <thead><tr><th>商品</th><th>單價</th><th>數量</th><th>小計</th></tr></thead>
+                        <tbody>
+                            ${data.items.map(i => `
+                                <tr><td>${i.product_name}</td><td>NT$ ${i.price}</td><td>${i.quantity}</td><td>NT$ ${i.subtotal}</td></tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    <div class="cart-total"><strong>總計: NT$ ${data.total}</strong></div>
+                `;
+                document.getElementById('btn-place-order').style.display = 'inline-block';
+            });
+    }
+
+    function placeOrder() {
+        fetch('/api/checkout', {method: 'POST'})
+            .then(r => r.json())
+            .then(data => {
+                const el = document.getElementById('order-result');
+                if (data.ok) {
+                    el.innerHTML = `<div class="alert alert-success">🎉 訂單 #${data.order_id} 成立！總金額 NT$ ${data.total_amount}</div>`;
+                    document.getElementById('btn-place-order').style.display = 'none';
+                } else {
+                    el.innerHTML = `<div class="alert alert-error">${data.message}</div>`;
+                }
+            });
+    }
+
+    loadCheckout();
+</script>
+{% endblock %}

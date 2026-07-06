@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}電商平台{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a href="/" class="brand">🛍️ ShopNow</a>
+            <ul class="nav-links">
+                <li><a href="/">首頁</a></li>
+                <li><a href="/products">商品</a></li>
+                <li><a href="/cart">購物車</a></li>
+                <li><a href="/admin/login">後台</a></li>
+            </ul>
+            <div class="nav-auth">
+                <span id="nav-username" style="display:none"></span>
+                <button id="btn-logout" style="display:none" onclick="logout()">登出</button>
+                <a href="/products" class="btn btn-primary" id="btn-login">登入 / 註冊</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2026 ShopNow 電商平台</p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

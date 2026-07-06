@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ShopEasy - 線上購物</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Microsoft JhengHei', sans-serif;
+    background: #f2f4f8; color: #333;
+  }
+
+  .navbar {
+    background: white; padding: 12px 24px;
+    display: flex; align-items: center; gap: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    position: sticky; top: 0; z-index: 10;
+  }
+  .navbar h1 { font-size: 20px; color: #2a5cb5; cursor: pointer; }
+  .navbar .spacer { flex: 1; }
+  .navbar-btns { display: flex; gap: 10px; }
+  .navbar-btns button {
+    padding: 8px 16px; border: none; border-radius: 4px;
+    cursor: pointer; font-size: 14px; font-family: inherit;
+  }
+  .navbar-btns .login-btn {
+    background: #2a5cb5; color: white;
+  }
+  .navbar-btns .login-btn:hover { background: #3572d0; }
+  .navbar-btns .register-btn {
+    background: white; color: #2a5cb5; border: 1px solid #2a5cb5;
+  }
+  .navbar-btns .register-btn:hover { background: #eef1f5; }
+  .navbar-btns .logout-btn {
+    background: none; border: 1px solid #ccc; color: #555;
+  }
+  .navbar-btns .logout-btn:hover { background: #fce8ea; border-color: #b8202f; color: #b8202f; }
+  .navbar-user {
+    font-size: 14px; color: #666; display: none;
+  }
+
+  .hero {
+    background: linear-gradient(135deg, #2a5cb5 0%, #4a7ed4 100%);
+    color: white; text-align: center; padding: 60px 20px;
+  }
+  .hero h1 { font-size: 36px; margin-bottom: 10px; }
+  .hero p { font-size: 16px; opacity: 0.9; margin-bottom: 20px; }
+  .hero .cta-btn {
+    padding: 12px 32px; background: white; color: #2a5cb5;
+    border: none; border-radius: 6px; font-size: 16px;
+    font-family: inherit; cursor: pointer; font-weight: bold;
+  }
+  .hero .cta-btn:hover { background: #eef1f5; }
+
+  .container { max-width: 1200px; margin: 0 auto; padding: 24px 16px; }
+
+  .section-title {
+    font-size: 22px; margin-bottom: 16px; display: flex;
+    align-items: center; gap: 8px;
+  }
+
+  .product-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+  }
+  .product-card {
+    background: white; border-radius: 8px; overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08); transition: 0.15s;
+  }
+  .product-card:hover { box-shadow: 0 3px 12px rgba(0,0,0,0.12); transform: translateY(-2px); }
+  .product-card .img-area {
+    height: 140px; background: #eef1f5;
+    display: flex; align-items: center; justify-content: center;
+    color: #999; font-size: 36px;
+  }
+  .product-card .info { padding: 14px; }
+  .product-card .info h3 { font-size: 16px; margin-bottom: 4px; }
+  .product-card .info .price { color: #e74c3c; font-size: 18px; font-weight: bold; }
+  .product-card .info .seller { color: #888; font-size: 13px; margin: 4px 0 8px; }
+  .product-card .info .add-btn {
+    width: 100%; padding: 8px; border: none; border-radius: 4px;
+    background: #2a5cb5; color: white; cursor: pointer; font-size: 14px; font-family: inherit;
+  }
+  .product-card .info .add-btn:hover { background: #3572d0; }
+  .product-card .info .add-btn:disabled {
+    background: #ccc; cursor: not-allowed;
+  }
+
+  .modal {
+    display: none; position: fixed; top: 0; left: 0; width: 100%;
+    height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;
+    align-items: center; justify-content: center;
+  }
+  .modal.show { display: flex; }
+  .modal-content {
+    background: white; border-radius: 12px; padding: 30px;
+    width: 90%; max-width: 400px; box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    animation: modalFadeIn 0.2s ease;
+  }
+  @keyframes modalFadeIn {
+    from { opacity: 0; transform: scale(0.95) translateY(-10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .modal-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 20px;
+  }
+  .modal-header h2 { font-size: 20px; color: #333; }
+  .modal-close {
+    background: none; border: none; font-size: 28px; cursor: pointer;
+    color: #999; line-height: 1;
+  }
+  .modal-close:hover { color: #333; }
+
+  .modal-tabs {
+    display: flex; gap: 0; margin-bottom: 20px; border: 1px solid #ddd;
+    border-radius: 6px; overflow: hidden;
+  }
+  .modal-tabs button {
+    flex: 1; padding: 10px; border: none; background: #f8f9fb;
+    cursor: pointer; font-size: 14px; color: #888; font-family: inherit;
+    transition: 0.15s;
+  }
+  .modal-tabs button.active {
+    background: #2a5cb5; color: white; font-weight: bold;
+  }
+
+  .modal-form { display: none; }
+  .modal-form.show { display: block; }
+  .modal-form .field {
+    margin-bottom: 12px;
+  }
+  .modal-form .field label {
+    display: block; font-size: 13px; color: #666; margin-bottom: 4px;
+  }
+  .modal-form .field input, .modal-form .field select {
+    width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;
+    font-size: 14px; font-family: inherit; transition: 0.15s;
+  }
+  .modal-form .field input:focus, .modal-form .field select:focus {
+    outline: none; border-color: #2a5cb5; box-shadow: 0 0 0 2px rgba(42,92,181,0.12);
+  }
+  .password-wrapper {
+    position: relative;
+  }
+  .password-wrapper input { padding-right: 40px !important; }
+  .password-toggle {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; cursor: pointer; color: #999; font-size: 18px;
+    padding: 4px;
+  }
+  .password-toggle:hover { color: #333; }
+  .modal-form .submit-btn {
+    width: 100%; padding: 12px; margin-top: 8px; border: none; border-radius: 6px;
+    background: #2a5cb5; color: white; cursor: pointer; font-size: 16px; font-family: inherit;
+    transition: 0.15s;
+  }
+  .modal-form .submit-btn:hover { background: #3572d0; }
+  .modal-form .submit-btn:disabled {
+    background: #999; cursor: not-allowed;
+  }
+
+  #訊息 {
+    text-align: center; padding: 10px; border-radius: 6px;
+    margin-top: 12px; font-size: 14px; display: none;
+  }
+  #訊息.show { display: block; }
+  #訊息.success { background: #e8f8ec; color: #1a7a35; }
+  #訊息.error { background: #fce8ea; color: #b8202f; }
+  #訊息.loading { background: #e8f0fe; color: #2a5cb5; }
+
+  @media (max-width: 600px) {
+    .hero h1 { font-size: 26px; }
+    .hero { padding: 40px 16px; }
+    .product-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="navbar">
+  <h1 onclick="卷軸至上()">🛒 ShopEasy</h1>
+  <div class="spacer"></div>
+  <div class="navbar-user" id="navbar-user"></div>
+  <div class="navbar-btns" id="navbar-btns">
+    <button class="register-btn" onclick="開啟模態('register')">註冊</button>
+    <button class="login-btn" onclick="開啟模態('login')">登入</button>
+  </div>
+  <button class="navbar-btns logout-btn" id="logout-btn" style="display:none;" onclick="登出()">登出</button>
+</div>
+
+<div class="hero" id="hero-section">
+  <h1>歡迎來到 ShopEasy</h1>
+  <p>探索精選商品，享受便捷的購物體驗</p>
+  <button class="cta-btn" onclick="開啟模態('register')">立即加入</button>
+</div>
+
+<div class="container">
+  <div class="section-title">
+    <span>🛍️</span> <span>熱門商品</span>
+  </div>
+  <div id="product-grid" class="product-grid"></div>
+  <div id="empty-msg" style="text-align:center;padding:60px 20px;color:#999;display:none;">
+    <p style="font-size:48px;margin-bottom:10px;">📦</p>
+    <p style="font-size:18px;">暫無商品</p>
+  </div>
+</div>
+
+<div id="auth-modal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 id="modal-title">登入帳號</h2>
+      <button class="modal-close" onclick="關閉模態()">&times;</button>
+    </div>
+
+    <div class="modal-tabs">
+      <button class="active" id="tab-login-btn" onclick="切換表單('login')">登入</button>
+      <button id="tab-register-btn" onclick="切換表單('register')">註冊</button>
+    </div>
+
+    <form id="login-form" class="modal-form show" onsubmit="送出登入(event)">
+      <div class="field">
+        <label>帳號</label>
+        <input id="login-user" type="text" placeholder="請輸入帳號" maxlength="20" required autocomplete="username">
+      </div>
+      <div class="field">
+        <label>密碼</label>
+        <div class="password-wrapper">
+          <input id="login-pass" type="password" placeholder="請輸入密碼" maxlength="50" required autocomplete="current-password">
+          <button type="button" class="password-toggle" onclick="切換密碼可見('login-pass', this)" tabindex="-1">👁️</button>
+        </div>
+      </div>
+      <button type="submit" class="submit-btn" id="login-submit-btn">登入</button>
+    </form>
+
+    <form id="register-form" class="modal-form" onsubmit="送出註冊(event)">
+      <div class="field">
+        <label>帳號</label>
+        <input id="reg-user" type="text" placeholder="請設定帳號（最多20字）" maxlength="20" required autocomplete="username">
+      </div>
+      <div class="field">
+        <label>密碼</label>
+        <div class="password-wrapper">
+          <input id="reg-pass" type="password" placeholder="請設定密碼（最多50字）" maxlength="50" required autocomplete="new-password">
+          <button type="button" class="password-toggle" onclick="切換密碼可見('reg-pass', this)" tabindex="-1">👁️</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>身份</label>
+        <select id="reg-role" required>
+          <option value="">-- 請選擇身份 --</option>
+          <option value="buyer">買家（購物消費）</option>
+          <option value="seller">商家（銷售商品）</option>
+        </select>
+      </div>
+      <button type="submit" class="submit-btn" id="register-submit-btn">建立帳號</button>
+    </form>
+
+    <div id="訊息"></div>
+  </div>
+</div>
+
+<script>
+const user = JSON.parse(localStorage.getItem('user') || 'null');
+if (user) {
+  document.getElementById('navbar-btns').style.display = 'none';
+  document.getElementById('navbar-user').style.display = 'block';
+  document.getElementById('navbar-user').textContent = `${user.username} 您好`;
+  document.getElementById('logout-btn').style.display = 'block';
+}
+
+function 卷軸至上() {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function 開啟模態(mode) {
+  document.getElementById('auth-modal').classList.add('show');
+  document.body.style.overflow = 'hidden';
+  切換表單(mode);
+}
+
+function 關閉模態() {
+  document.getElementById('auth-modal').classList.remove('show');
+  document.body.style.overflow = '';
+  顯示訊息('', '');
+}
+
+function 切換表單(which) {
+  document.getElementById('login-form').classList.toggle('show', which === 'login');
+  document.getElementById('register-form').classList.toggle('show', which === 'register');
+  document.getElementById('tab-login-btn').classList.toggle('active', which === 'login');
+  document.getElementById('tab-register-btn').classList.toggle('active', which === 'register');
+  document.getElementById('modal-title').textContent = which === 'login' ? '登入帳號' : '建立新帳號';
+  顯示訊息('', '');
+}
+
+function 顯示訊息(text, kind) {
+  const el = document.getElementById('訊息');
+  el.textContent = text;
+  el.className = kind;
+  if (text) el.classList.add('show');
+  else el.classList.remove('show');
+}
+
+function 切換密碼可見(inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (input.type === 'password') {
+    input.type = 'text';
+    btn.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    btn.textContent = '👁️';
+  }
+}
+
+function 設定按鈕載入(btnId, loading) {
+  const btn = document.getElementById(btnId);
+  btn.disabled = loading;
+  btn.textContent = loading ? '處理中...' : (btnId === 'login-submit-btn' ? '登入' : '建立帳號');
+}
+
+async function 送出登入(e) {
+  e.preventDefault();
+  const username = document.getElementById('login-user').value.trim();
+  const password = document.getElementById('login-pass').value;
+  if (!username || !password) { 顯示訊息('請輸入帳號和密碼', 'error'); return; }
+
+  設定按鈕載入('login-submit-btn', true);
+  顯示訊息('登入中...', 'loading');
+
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ username, password }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      localStorage.setItem('user', JSON.stringify(data.user));
+      顯示訊息('✅ ' + data.message, 'success');
+      setTimeout(() => {
+        關閉模態();
+        window.location.reload();
+      }, 600);
+    } else {
+      顯示訊息('❌ ' + data.error, 'error');
+    }
+  } catch (err) {
+    顯示訊息('❌ 網路錯誤，請確認伺服器是否開啟', 'error');
+  }
+  設定按鈕載入('login-submit-btn', false);
+}
+
+async function 送出註冊(e) {
+  e.preventDefault();
+  const username = document.getElementById('reg-user').value.trim();
+  const password = document.getElementById('reg-pass').value;
+  const role = document.getElementById('reg-role').value;
+
+  if (!username || !password) { 顯示訊息('請填寫帳號和密碼', 'error'); return; }
+  if (!role) { 顯示訊息('請選擇身份', 'error'); return; }
+
+  設定按鈕載入('register-submit-btn', true);
+  顯示訊息('註冊中...', 'loading');
+
+  try {
+    const res = await fetch('/api/register', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ username, password, role }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      顯示訊息('✅ ' + data.message, 'success');
+      document.getElementById('reg-user').value = '';
+      document.getElementById('reg-pass').value = '';
+      document.getElementById('reg-role').value = '';
+      setTimeout(() => {
+        切換表單('login');
+        顯示訊息('請用新帳號登入', 'success');
+      }, 1000);
+    } else {
+      顯示訊息('❌ ' + data.error, 'error');
+    }
+  } catch (err) {
+    顯示訊息('❌ 網路錯誤，請確認伺服器是否開啟', 'error');
+  }
+  設定按鈕載入('register-submit-btn', false);
+}
+
+function 登出() {
+  localStorage.removeItem('user');
+  window.location.reload();
+}
+
+async function 載入商品() {
+  try {
+    const res = await fetch('/api/products');
+    const data = await res.json();
+    if (!data.ok) return;
+
+    const grid = document.getElementById('product-grid');
+    const empty = document.getElementById('empty-msg');
+
+    if (data.products.length === 0) {
+      grid.style.display = 'none';
+      empty.style.display = 'block';
+      return;
+    }
+
+    empty.style.display = 'none';
+    grid.innerHTML = data.products.map(p => `
+      <div class="product-card">
+        <div class="img-area">📱</div>
+        <div class="info">
+          <h3>${p.name}</h3>
+          <div class="price">$${p.price}</div>
+          <div class="seller">商家：${p.seller_name}</div>
+          <button class="add-btn"
+            onclick="加入購物車(${p.id})"
+            ${!user ? 'disabled' : ''}>
+            ${!user ? '登入後購買' : '加入購物車'}
+          </button>
+        </div>
+      </div>
+    `).join('');
+  } catch (err) {
+    document.getElementById('product-grid').innerHTML = '<p style="color:#999;text-align:center;padding:40px;">⚠️ 無法載入商品，請確認伺服器已開啟</p>';
+  }
+}
+
+async function 加入購物車(productId) {
+  if (!user) {
+    顯示訊息('❌ 請先登入', 'error');
+    開啟模態('login');
+    return;
+  }
+  try {
+    const res = await fetch('/api/cart/add', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({user_id: user.id, product_id: productId, quantity: 1}),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      alert('✅ 已加入購物車');
+    } else {
+      alert('❌ ' + data.error);
+    }
+  } catch (err) {
+    alert('❌ 網路錯誤');
+  }
+}
+
+document.getElementById('auth-modal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('auth-modal')) {
+    關閉模態();
+  }
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') 關閉模態();
+});
+
+載入商品();
+</script>
+
+</body>
+</html>

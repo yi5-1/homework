@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DAY6 整合應用</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Microsoft JhengHei', sans-serif;
+    background: #0f172a; color: #e2e8f0;
+    min-height: 100vh; display: flex; flex-direction: column;
+  }
+
+  .navbar {
+    background: #1e293b; padding: 0 20px;
+    display: flex; align-items: center; gap: 4px;
+    border-bottom: 1px solid #334155;
+    flex-wrap: wrap;
+  }
+  .navbar .brand {
+    font-size: 18px; font-weight: bold; color: #38bdf8;
+    padding: 14px 16px 14px 0;
+    margin-right: 8px;
+  }
+  .navbar .tab {
+    padding: 14px 18px; cursor: pointer; font-size: 14px;
+    color: #94a3b8; border-bottom: 2px solid transparent;
+    transition: 0.15s; white-space: nowrap;
+  }
+  .navbar .tab:hover { color: #e2e8f0; }
+  .navbar .tab.active { color: #38bdf8; border-bottom-color: #38bdf8; font-weight: bold; }
+  .navbar .spacer { flex: 1; }
+  .navbar .user-area {
+    display: flex; align-items: center; gap: 10px; font-size: 13px;
+  }
+  .navbar .user-area .greeting { color: #94a3b8; }
+  .navbar .user-area button {
+    padding: 6px 14px; border: none; border-radius: 4px;
+    cursor: pointer; font-size: 13px; font-family: inherit;
+  }
+  .navbar .btn-login { background: #38bdf8; color: #0f172a; font-weight: bold; }
+  .navbar .btn-login:hover { background: #7dd3fc; }
+  .navbar .btn-register { background: transparent; color: #38bdf8; border: 1px solid #38bdf8; }
+  .navbar .btn-register:hover { background: #0c4a6e; }
+  .navbar .btn-logout { background: transparent; color: #f87171; border: 1px solid #f87171; }
+  .navbar .btn-logout:hover { background: #450a0a; }
+
+  .main { flex: 1; }
+
+  .page { display: none; padding: 24px 20px; max-width: 1100px; margin: 0 auto; width: 100%; }
+  .page.active { display: block; }
+
+  .page-title { font-size: 22px; margin-bottom: 16px; }
+  .page-desc { color: #94a3b8; font-size: 14px; margin-bottom: 24px; }
+
+  /* ===== 首頁 ===== */
+  .hero-section {
+    text-align: center; padding: 40px 20px;
+  }
+  .hero-section h1 { font-size: 32px; margin-bottom: 10px; }
+  .hero-section p { color: #94a3b8; font-size: 15px; max-width: 500px; margin: 0 auto 24px; }
+  .stats { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+  .stat-card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 10px;
+    padding: 20px 28px; text-align: center; min-width: 120px;
+  }
+  .stat-card .num { font-size: 28px; font-weight: bold; color: #38bdf8; }
+  .stat-card .label { font-size: 13px; color: #64748b; margin-top: 4px; }
+
+  /* ===== 商店 ===== */
+  .shop-layout { display: flex; gap: 20px; flex-wrap: wrap; }
+  .shop-products { flex: 1; min-width: 280px; }
+  .shop-cart { width: 320px; }
+  @media (max-width: 700px) { .shop-cart { width: 100%; } }
+
+  .product-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+  }
+  .product-card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 8px;
+    overflow: hidden; transition: 0.15s;
+  }
+  .product-card:hover { border-color: #38bdf8; transform: translateY(-2px); }
+  .product-card .img-area {
+    height: 120px; background: #0f172a;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px;
+  }
+  .product-card .info { padding: 12px; }
+  .product-card .info h3 { font-size: 14px; margin-bottom: 2px; }
+  .product-card .info .price { color: #f87171; font-size: 17px; font-weight: bold; }
+  .product-card .info .seller { color: #64748b; font-size: 12px; margin: 2px 0 8px; }
+  .product-card .info button {
+    width: 100%; padding: 7px; border: none; border-radius: 4px;
+    cursor: pointer; font-size: 13px; font-family: inherit;
+    background: #38bdf8; color: #0f172a; font-weight: bold;
+  }
+  .product-card .info button:hover { background: #7dd3fc; }
+  .product-card .info button:disabled { background: #334155; color: #64748b; cursor: not-allowed; }
+
+  .cart-card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 8px;
+    padding: 16px; position: sticky; top: 80px;
+  }
+  .cart-card h3 { font-size: 16px; margin-bottom: 12px; color: #38bdf8; }
+  .cart-empty { color: #64748b; text-align: center; padding: 30px 0; font-size: 14px; }
+  .cart-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 0; border-bottom: 1px solid #334155; font-size: 13px;
+  }
+  .cart-item .name { flex: 1; }
+  .cart-item .qty { display: flex; align-items: center; gap: 6px; margin: 0 10px; }
+  .cart-item .qty button {
+    width: 24px; height: 24px; border: 1px solid #475569; border-radius: 3px;
+    background: #0f172a; color: #e2e8f0; cursor: pointer; font-size: 14px;
+  }
+  .cart-item .qty button:hover { background: #1e293b; }
+  .cart-item .qty span { min-width: 20px; text-align: center; }
+  .cart-item .subtotal { color: #f87171; font-weight: bold; min-width: 60px; text-align: right; }
+  .cart-total {
+    display: flex; justify-content: space-between; padding: 12px 0;
+    font-size: 16px; font-weight: bold; border-top: 1px solid #334155; margin-top: 8px;
+  }
+  .cart-total .amount { color: #f87171; }
+
+  .empty-msg { text-align: center; padding: 60px 20px; color: #64748b; }
+
+  /* ===== 賣家 ===== */
+  .seller-dashboard { display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+  .seller-stat {
+    flex: 1; min-width: 150px; background: #1e293b; border: 1px solid #334155;
+    border-radius: 8px; padding: 16px; text-align: center;
+  }
+  .seller-stat .num { font-size: 26px; font-weight: bold; color: #38bdf8; margin-top: 4px; }
+  .seller-stat .label { font-size: 13px; color: #64748b; }
+
+  .form-card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 8px;
+    padding: 20px; margin-bottom: 20px;
+  }
+  .form-card h3 { font-size: 15px; margin-bottom: 12px; }
+  .form-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+  .form-row input, .form-row textarea {
+    flex: 1; min-width: 180px; padding: 8px 10px; background: #0f172a;
+    border: 1px solid #334155; border-radius: 4px; font-size: 14px;
+    color: #e2e8f0; font-family: inherit;
+  }
+  .form-row input:focus, .form-row textarea:focus { outline: none; border-color: #38bdf8; }
+  .form-row textarea { min-height: 50px; resize: vertical; }
+  .form-card button {
+    padding: 8px 24px; border: none; border-radius: 4px;
+    background: #38bdf8; color: #0f172a; cursor: pointer;
+    font-size: 14px; font-family: inherit; font-weight: bold;
+  }
+  .form-card button:hover { background: #7dd3fc; }
+
+  .prod-table { width: 100%; border-collapse: collapse; }
+  .prod-table th { background: #1e293b; padding: 10px; text-align: left; font-size: 13px; color: #94a3b8; border-bottom: 1px solid #334155; }
+  .prod-table td { padding: 10px; border-bottom: 1px solid #1e293b; font-size: 13px; }
+
+  /* ===== 留言板 ===== */
+  .msg-form {
+    display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;
+  }
+  .msg-form input {
+    padding: 8px 12px; background: #0f172a; border: 1px solid #334155;
+    border-radius: 4px; font-size: 14px; color: #e2e8f0; font-family: inherit;
+  }
+  .msg-form input:focus { outline: none; border-color: #38bdf8; }
+  .msg-form input[type="text"] { flex: 0 0 120px; }
+  .msg-form input[type="text"]:last-child { flex: 1; min-width: 200px; }
+  .msg-form button {
+    padding: 8px 20px; border: none; border-radius: 4px;
+    background: #38bdf8; color: #0f172a; cursor: pointer;
+    font-size: 14px; font-family: inherit; font-weight: bold;
+  }
+  .msg-form button:hover { background: #7dd3fc; }
+
+  .msg-item {
+    background: #1e293b; border: 1px solid #334155; border-radius: 6px;
+    padding: 14px; margin-bottom: 8px;
+  }
+  .msg-item .header {
+    display: flex; justify-content: space-between; margin-bottom: 6px;
+    font-size: 13px;
+  }
+  .msg-item .author { color: #38bdf8; font-weight: bold; }
+  .msg-item .time { color: #64748b; }
+  .msg-item .text { font-size: 14px; line-height: 1.5; }
+
+  /* ===== 登入模態 ===== */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    z-index: 1000; align-items: center; justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-box {
+    background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+    padding: 28px; width: 90%; max-width: 360px; animation: fadeIn 0.2s;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+  .modal-box h2 { font-size: 18px; color: #38bdf8; margin-bottom: 16px; text-align: center; }
+  .modal-tabs { display: flex; margin-bottom: 16px; border: 1px solid #334155; border-radius: 6px; overflow: hidden; }
+  .modal-tabs button {
+    flex: 1; padding: 9px; border: none; background: #0f172a; cursor: pointer;
+    font-size: 14px; color: #64748b; font-family: inherit;
+  }
+  .modal-tabs button.active { background: #38bdf8; color: #0f172a; font-weight: bold; }
+
+  .auth-form { display: none; }
+  .auth-form.show { display: block; }
+  .auth-form .field { margin-bottom: 14px; }
+  .auth-form .field label { display: block; font-size: 13px; color: #94a3b8; margin-bottom: 4px; }
+  .auth-form .field input, .auth-form .field select {
+    width: 100%; padding: 9px 10px; background: #0f172a; border: 1px solid #334155;
+    border-radius: 4px; font-size: 14px; color: #e2e8f0; font-family: inherit;
+  }
+  .auth-form .field input:focus, .auth-form .field select:focus { outline: none; border-color: #38bdf8; }
+  .auth-form button[type="submit"] {
+    width: 100%; padding: 10px; border: none; border-radius: 6px;
+    background: #38bdf8; color: #0f172a; font-size: 15px;
+    font-family: inherit; cursor: pointer; font-weight: bold;
+  }
+  .auth-form button[type="submit"]:hover { background: #7dd3fc; }
+
+  #auth-msg { text-align: center; margin-top: 10px; font-size: 13px; display: none; }
+  #auth-msg.show { display: block; }
+  #auth-msg.success { color: #6ee7b7; }
+  #auth-msg.error { color: #fca5a5; }
+
+  .toast {
+    position: fixed; top: 16px; right: 16px; padding: 10px 20px;
+    border-radius: 6px; font-size: 14px; z-index: 2000;
+    animation: slideIn 0.25s ease; display: none;
+  }
+  .toast.show { display: block; }
+  .toast.success { background: #064e3b; color: #6ee7b7; border: 1px solid #065f46; }
+  .toast.error { background: #450a0a; color: #fca5a5; border: 1px solid #7f1d1d; }
+  @keyframes slideIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+
+  @media (max-width: 600px) {
+    .navbar .tab { padding: 12px 12px; font-size: 13px; }
+    .hero-section h1 { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="navbar">
+  <div class="brand">DAY6</div>
+  <div class="tab active" onclick="切換頁面('home')">🏠 首頁</div>
+  <div class="tab" onclick="切換頁面('shop')">🛒 商店</div>
+  <div class="tab" id="seller-tab" onclick="切換頁面('seller')" style="display:none">🏪 賣家</div>
+  <div class="tab" onclick="切換頁面('messages')">💬 留言板</div>
+  <div class="spacer"></div>
+  <div class="user-area" id="user-area">
+    <span class="greeting" id="greeting" style="display:none"></span>
+    <button class="btn-register" id="btn-register" onclick="開啟登入('register')">註冊</button>
+    <button class="btn-login" id="btn-login" onclick="開啟登入('login')">登入</button>
+    <button class="btn-logout" id="btn-logout" style="display:none" onclick="登出()">登出</button>
+  </div>
+</div>
+
+<div class="main">
+  <!-- 首頁 -->
+  <div class="page active" id="page-home">
+    <div class="hero-section">
+      <h1>DAY6 整合應用</h1>
+      <p>一個統一入口，整合商店購物、商家管理與留言板功能</p>
+      <div class="stats" id="home-stats">
+        <div class="stat-card"><div class="num" id="stat-products">0</div><div class="label">商品總數</div></div>
+        <div class="stat-card"><div class="num" id="stat-users">0</div><div class="label">會員人數</div></div>
+        <div class="stat-card"><div class="num" id="stat-messages">0</div><div class="label">留言總數</div></div>
+      </div>
+    </div>
+    <div style="text-align:center;padding:20px;color:#64748b;font-size:14px;">
+      登入後即可使用商店購物功能<br>
+      賣家身份可管理商品上架
+    </div>
+  </div>
+
+  <!-- 商店 -->
+  <div class="page" id="page-shop">
+    <div class="page-title">🛍️ 商品商店</div>
+    <div class="shop-layout">
+      <div class="shop-products">
+        <div id="product-grid" class="product-grid"></div>
+        <div id="shop-empty" class="empty-msg" style="display:none">📦 暫無商品</div>
+      </div>
+      <div class="shop-cart">
+        <div class="cart-card">
+          <h3>🛒 購物車</h3>
+          <div id="cart-content"><div class="cart-empty">請先登入以使用購物車</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 賣家 -->
+  <div class="page" id="page-seller">
+    <div class="page-title">🏪 商家管理</div>
+
+    <div class="seller-dashboard">
+      <div class="seller-stat"><div class="num" id="seller-count">0</div><div class="label">上架商品</div></div>
+      <div class="seller-stat"><div class="num" id="seller-revenue">$0</div><div class="label">累計收入</div></div>
+    </div>
+
+    <div class="form-card">
+      <h3>📤 上架新商品</h3>
+      <div class="form-row">
+        <input id="prod-name" type="text" placeholder="商品名稱">
+        <input id="prod-price" type="number" step="0.01" min="0" placeholder="價格">
+      </div>
+      <div class="form-row">
+        <textarea id="prod-desc" placeholder="商品描述（選填）"></textarea>
+      </div>
+      <button onclick="上架商品()">確認上架</button>
+      <div id="seller-msg" style="margin-top:8px;font-size:13px;color:#6ee7b7;"></div>
+    </div>
+
+    <h3 style="font-size:15px;margin-bottom:10px;">📋 我的商品</h3>
+    <table class="prod-table">
+      <thead><tr><th>名稱</th><th>價格</th><th>描述</th><th>上架時間</th></tr></thead>
+      <tbody id="seller-product-list"></tbody>
+    </table>
+  </div>
+
+  <!-- 留言板 -->
+  <div class="page" id="page-messages">
+    <div class="page-title">💬 留言板</div>
+    <form class="msg-form" onsubmit="送出留言(event)">
+      <input type="text" id="msg-name" placeholder="你的名字" maxlength="20" value="匿名">
+      <input type="text" id="msg-text" placeholder="寫下你想說的話..." maxlength="200" required>
+      <button type="submit">送出</button>
+    </form>
+    <div id="message-list"></div>
+  </div>
+</div>
+
+<!-- 登入模態 -->
+<div class="modal-overlay" id="auth-modal">
+  <div class="modal-box">
+    <h2 id="auth-title">登入</h2>
+    <div class="modal-tabs">
+      <button class="active" id="auth-tab-login" onclick="auth切換('login')">登入</button>
+      <button id="auth-tab-register" onclick="auth切換('register')">註冊</button>
+    </div>
+
+    <form class="auth-form show" id="form-login" onsubmit="送出登入(event)">
+      <div class="field">
+        <label>帳號</label>
+        <input id="login-user" type="text" placeholder="輸入帳號" required autocomplete="username">
+      </div>
+      <div class="field">
+        <label>密碼</label>
+        <input id="login-pass" type="password" placeholder="輸入密碼" required autocomplete="current-password">
+      </div>
+      <button type="submit">登入</button>
+    </form>
+
+    <form class="auth-form" id="form-register" onsubmit="送出註冊(event)">
+      <div class="field">
+        <label>帳號</label>
+        <input id="reg-user" type="text" placeholder="設定帳號（最多20字）" maxlength="20" required autocomplete="username">
+      </div>
+      <div class="field">
+        <label>密碼</label>
+        <input id="reg-pass" type="password" placeholder="設定密碼（最多50字）" maxlength="50" required autocomplete="new-password">
+      </div>
+      <div class="field">
+        <label>身份</label>
+        <select id="reg-role">
+          <option value="buyer">買家（購物消費）</option>
+          <option value="seller">商家（銷售商品）</option>
+        </select>
+      </div>
+      <button type="submit">建立帳號</button>
+    </form>
+
+    <div id="auth-msg"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== 狀態 =====
+let user = JSON.parse(localStorage.getItem('day6_user') || 'null');
+
+function 儲存使用者(u) {
+  user = u;
+  if (u) localStorage.setItem('day6_user', JSON.stringify(u));
+  else localStorage.removeItem('day6_user');
+}
+
+function 更新導覽列() {
+  const greeting = document.getElementById('greeting');
+  const btnLogin = document.getElementById('btn-login');
+  const btnRegister = document.getElementById('btn-register');
+  const btnLogout = document.getElementById('btn-logout');
+  const sellerTab = document.getElementById('seller-tab');
+
+  if (user) {
+    greeting.style.display = '';
+    greeting.textContent = `${user.username} 您好`;
+    btnLogin.style.display = 'none';
+    btnRegister.style.display = 'none';
+    btnLogout.style.display = '';
+    sellerTab.style.display = user.role === 'seller' ? '' : 'none';
+  } else {
+    greeting.style.display = 'none';
+    btnLogin.style.display = '';
+    btnRegister.style.display = '';
+    btnLogout.style.display = 'none';
+    sellerTab.style.display = 'none';
+  }
+}
+
+function 開啟登入(mode) {
+  document.getElementById('auth-modal').classList.add('show');
+  auth切換(mode);
+}
+
+function 關閉登入() {
+  document.getElementById('auth-modal').classList.remove('show');
+  const el = document.getElementById('auth-msg');
+  el.textContent = ''; el.className = ''; el.style.display = 'none';
+}
+
+function auth切換(which) {
+  document.getElementById('form-login').classList.toggle('show', which === 'login');
+  document.getElementById('form-register').classList.toggle('show', which === 'register');
+  document.getElementById('auth-tab-login').classList.toggle('active', which === 'login');
+  document.getElementById('auth-tab-register').classList.toggle('active', which === 'register');
+  document.getElementById('auth-title').textContent = which === 'login' ? '登入' : '註冊';
+  const el = document.getElementById('auth-msg');
+  el.textContent = ''; el.className = ''; el.style.display = 'none';
+}
+
+function auth訊息(text, kind) {
+  const el = document.getElementById('auth-msg');
+  el.textContent = text;
+  el.className = kind;
+  el.style.display = text ? 'block' : 'none';
+}
+
+function toast(text, kind) {
+  const el = document.getElementById('toast');
+  el.textContent = text;
+  el.className = 'toast show ' + kind;
+  setTimeout(() => { el.classList.remove('show'); }, 2500);
+}
+
+async function 送出登入(e) {
+  e.preventDefault();
+  const username = document.getElementById('login-user').value.trim();
+  const password = document.getElementById('login-pass').value;
+  if (!username || !password) { auth訊息('請輸入帳號和密碼', 'error'); return; }
+
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ username, password }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      儲存使用者(data.user);
+      關閉登入();
+      更新導覽列();
+      toast(`✅ 歡迎回來，${data.user.username}`, 'success');
+      載入首頁統計();
+      if (data.user.role === 'seller') {
+        切換頁面('seller');
+        載入賣家資料();
+      }
+    } else {
+      auth訊息('❌ ' + data.error, 'error');
+    }
+  } catch (err) {
+    auth訊息('❌ 無法連線到伺服器', 'error');
+  }
+}
+
+async function 送出註冊(e) {
+  e.preventDefault();
+  const username = document.getElementById('reg-user').value.trim();
+  const password = document.getElementById('reg-pass').value;
+  const role = document.getElementById('reg-role').value;
+  if (!username || !password) { auth訊息('請填寫帳號和密碼', 'error'); return; }
+
+  try {
+    const res = await fetch('/api/register', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ username, password, role }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      auth訊息('✅ ' + data.message, 'success');
+      document.getElementById('reg-user').value = '';
+      document.getElementById('reg-pass').value = '';
+      setTimeout(() => {
+        auth切換('login');
+        auth訊息('請用新帳號登入', 'success');
+      }, 800);
+    } else {
+      auth訊息('❌ ' + data.error, 'error');
+    }
+  } catch (err) {
+    auth訊息('❌ 無法連線到伺服器', 'error');
+  }
+}
+
+function 登出() {
+  儲存使用者(null);
+  更新導覽列();
+  toast('已登出', 'success');
+  切換頁面('home');
+}
+
+// ===== 頁面切換 =====
+function 切換頁面(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('.tab').forEach(t => {
+    if (t.textContent.includes({'home':'首頁','shop':'商店','seller':'賣家','messages':'留言板'}[name])) {
+      t.classList.add('active');
+    }
+  });
+  if (name === 'shop') { 載入商品(); if (user) 載入購物車(); }
+  if (name === 'seller') 載入賣家資料();
+  if (name === 'messages') 載入留言();
+  if (name === 'home') 載入首頁統計();
+}
+
+// ===== 首頁統計 =====
+async function 載入首頁統計() {
+  try {
+    const [pRes, mRes] = await Promise.all([
+      fetch('/api/products'),
+      fetch('/api/messages'),
+    ]);
+    const pData = await pRes.json();
+    const mData = await mRes.json();
+
+    document.getElementById('stat-products').textContent = pData.ok ? pData.products.length : '0';
+    document.getElementById('stat-messages').textContent = mData.length || '0';
+    document.getElementById('stat-users').textContent = user ? '👤' : '?';
+  } catch (_) {}
+}
+
+// ===== 商店 =====
+async function 載入商品() {
+  try {
+    const res = await fetch('/api/products');
+    const data = await res.json();
+    if (!data.ok) return;
+
+    const grid = document.getElementById('product-grid');
+    const empty = document.getElementById('shop-empty');
+
+    if (data.products.length === 0) {
+      grid.style.display = 'none';
+      empty.style.display = 'block';
+      return;
+    }
+    empty.style.display = 'none';
+    grid.style.display = '';
+    grid.innerHTML = data.products.map(p => `
+      <div class="product-card">
+        <div class="img-area">📱</div>
+        <div class="info">
+          <h3>${p.name}</h3>
+          <div class="price">$${p.price}</div>
+          <div class="seller">${p.seller_name}</div>
+          <button ${!user ? 'disabled' : ''} onclick="加入購物車(${p.id})">${!user ? '登入後購買' : '加入購物車'}</button>
+        </div>
+      </div>
+    `).join('');
+  } catch (_) { document.getElementById('product-grid').innerHTML = '<div class="empty-msg">⚠️ 無法載入商品</div>'; }
+}
+
+async function 加入購物車(productId) {
+  if (!user) { toast('請先登入', 'error'); 開啟登入('login'); return; }
+  try {
+    const res = await fetch('/api/cart/add', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({user_id: user.id, product_id: productId, quantity: 1}),
+    });
+    const data = await res.json();
+    if (data.ok) { toast('✅ 已加入購物車', 'success'); 載入購物車(); }
+    else { toast('❌ ' + data.error, 'error'); }
+  } catch (_) { toast('❌ 網路錯誤', 'error'); }
+}
+
+async function 載入購物車() {
+  if (!user) { document.getElementById('cart-content').innerHTML = '<div class="cart-empty">請先登入以使用購物車</div>'; return; }
+  try {
+    const res = await fetch('/api/cart?user_id=' + user.id);
+    const data = await res.json();
+    if (!data.ok) { document.getElementById('cart-content').innerHTML = '<div class="cart-empty">⚠️ 無法載入購物車</div>'; return; }
+    if (data.items.length === 0) { document.getElementById('cart-content').innerHTML = '<div class="cart-empty">🛒 購物車是空的</div>'; return; }
+
+    let html = '';
+    data.items.forEach(item => {
+      html += `<div class="cart-item">
+        <span class="name">${item.name}</span>
+        <div class="qty">
+          <button onclick="更新購物車(${item.product_id}, ${item.quantity - 1})">−</button>
+          <span>${item.quantity}</span>
+          <button onclick="更新購物車(${item.product_id}, ${item.quantity + 1})">+</button>
+        </div>
+        <span class="subtotal">$${item.subtotal}</span>
+      </div>`;
+    });
+    html += `<div class="cart-total"><span>總計</span><span class="amount">$${data.total}</span></div>`;
+    document.getElementById('cart-content').innerHTML = html;
+  } catch (_) { document.getElementById('cart-content').innerHTML = '<div class="cart-empty">⚠️ 網路錯誤</div>'; }
+}
+
+async function 更新購物車(productId, qty) {
+  try {
+    await fetch('/api/cart/update', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({user_id: user.id, product_id: productId, quantity: qty}),
+    });
+    載入購物車();
+  } catch (_) {}
+}
+
+// ===== 賣家 =====
+async function 載入賣家資料() {
+  if (!user || user.role !== 'seller') return;
+  try {
+    const res = await fetch('/api/seller/dashboard?seller_id=' + user.id);
+    const data = await res.json();
+    if (!data.ok) return;
+    document.getElementById('seller-count').textContent = data.product_count;
+    document.getElementById('seller-revenue').textContent = '$' + data.total_revenue;
+
+    const tbody = document.getElementById('seller-product-list');
+    if (data.products.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:30px;color:#64748b;">尚未上架任何商品</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.products.map(p => `
+      <tr>
+        <td><strong>${p.name}</strong></td>
+        <td>$${p.price}</td>
+        <td>${p.description || '-'}</td>
+        <td style="color:#64748b;">${(p.created_at || '').slice(0, 10)}</td>
+      </tr>
+    `).join('');
+  } catch (_) {}
+}
+
+async function 上架商品() {
+  if (!user || user.role !== 'seller') { toast('請以賣家身份登入', 'error'); return; }
+  const name = document.getElementById('prod-name').value.trim();
+  const price = parseFloat(document.getElementById('prod-price').value);
+  const description = document.getElementById('prod-desc').value.trim();
+  if (!name) { document.getElementById('seller-msg').textContent = '請輸入商品名稱'; return; }
+  if (isNaN(price) || price < 0) { document.getElementById('seller-msg').textContent = '請輸入有效價格'; return; }
+
+  try {
+    const res = await fetch('/api/seller/products', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({seller_id: user.id, name, price, description}),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      document.getElementById('seller-msg').textContent = `✅ ${name} 上架成功！`;
+      document.getElementById('prod-name').value = '';
+      document.getElementById('prod-price').value = '';
+      document.getElementById('prod-desc').value = '';
+      載入賣家資料();
+    } else {
+      document.getElementById('seller-msg').textContent = '❌ ' + data.error;
+    }
+  } catch (_) { document.getElementById('seller-msg').textContent = '❌ 網路錯誤'; }
+}
+
+// ===== 留言板 =====
+async function 載入留言() {
+  try {
+    const res = await fetch('/api/messages');
+    const data = await res.json();
+    const list = document.getElementById('message-list');
+    if (data.length === 0) {
+      list.innerHTML = '<div class="empty-msg" style="padding:40px;">📝 還沒有留言，來寫第一則吧！</div>';
+      return;
+    }
+    list.innerHTML = data.map(m => `
+      <div class="msg-item">
+        <div class="header">
+          <span class="author">${m.name}</span>
+          <span class="time">${m.created_at}</span>
+        </div>
+        <div class="text">${m.text}</div>
+      </div>
+    `).join('');
+  } catch (_) { document.getElementById('message-list').innerHTML = '<div class="empty-msg">⚠️ 無法載入留言</div>'; }
+}
+
+function 送出留言(e) {
+  e.preventDefault();
+  const name = document.getElementById('msg-name').value.trim() || '匿名';
+  const text = document.getElementById('msg-text').value.trim();
+  if (!text) return;
+
+  fetch('/api/messages', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({name, text}),
+  }).then(() => {
+    document.getElementById('msg-text').value = '';
+    載入留言();
+  });
+}
+
+// ===== 初始化 =====
+document.getElementById('auth-modal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('auth-modal')) 關閉登入();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') 關閉登入();
+});
+
+更新導覽列();
+載入首頁統計();
+</script>
+</body>
+</html>

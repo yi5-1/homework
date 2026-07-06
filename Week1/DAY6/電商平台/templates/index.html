@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}ShopNow - 首頁{% endblock %}
+{% block content %}
+<section class="hero">
+    <h1>歡迎來到 ShopNow</h1>
+    <p>發現最熱門的商品，享受最優惠的價格</p>
+    <a href="/products" class="btn btn-primary btn-lg">開始購物</a>
+</section>
+
+<section class="section">
+    <h2>🔥 熱門商品</h2>
+    <div class="product-grid" id="hot-products"></div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    fetch('/api/products/hot')
+        .then(r => r.json())
+        .then(data => {
+            const grid = document.getElementById('hot-products');
+            if (!data.ok || data.products.length === 0) {
+                grid.innerHTML = '<p>暫無熱門商品</p>';
+                return;
+            }
+            grid.innerHTML = data.products.map(p => `
+                <div class="product-card">
+                    <div class="product-img">📦</div>
+                    <h3>${p.name}</h3>
+                    <p class="price">NT$ ${p.price}</p>
+                    <button class="btn btn-primary" onclick="addToCart(${p.id})">加入購物車</button>
+                </div>
+            `).join('');
+        });
+</script>
+{% endblock %}

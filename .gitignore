@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 虛擬環境
+.venv/
+venv/
+env/
+
+# 環境變數（含密碼，禁止 push）
+.env
+
+# SQLite 資料庫（各人自己跑會產生）
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE / 編輯器
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Office 開啟中的鎖檔
+~$*
+# 圖片檔案
+*.jpg

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}購物車{% endblock %}
+{% block content %}
+<section class="section">
+    <h1>🛒 購物車</h1>
+    <div id="cart-content"></div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function loadCart() {
+        fetch('/api/cart')
+            .then(r => r.json())
+            .then(data => {
+                const el = document.getElementById('cart-content');
+                if (!data.ok) {
+                    el.innerHTML = '<p>請先登入</p>';
+                    return;
+                }
+                if (data.items.length === 0) {
+                    el.innerHTML = '<p>購物車是空的</p>';
+                    return;
+                }
+                el.innerHTML = `
+                    <table class="cart-table">
+                        <thead><tr><th>商品</th><th>單價</th><th>數量</th><th>小計</th><th></th></tr></thead>
+                        <tbody>
+                            ${data.items.map(i => `
+                                <tr>
+                                    <td>${i.product_name}</td>
+                                    <td>NT$ ${i.price}</td>
+                                    <td><input type="number" value="${i.quantity}" min="1" onchange="updateCart(${i.id}, this.value)" class="qty-input"></td>
+                                    <td>NT$ ${i.subtotal}</td>
+                                    <td><button class="btn btn-danger" onclick="removeFromCart(${i.id})">刪除</button></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    <div class="cart-total">
+                        <strong>總計: NT$ ${data.total}</strong>
+                    </div>
+                    <a href="/checkout" class="btn btn-primary btn-lg">前往結帳</a>
+                `;
+            });
+    }
+
+    function updateCart(itemId, qty) {
+        fetch(`/api/cart/${itemId}`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({quantity: parseInt(qty)})
+        }).then(() => loadCart());
+    }
+
+    function removeFromCart(itemId) {
+        fetch(`/api/cart/${itemId}`, {method: 'DELETE'})
+            .then(() => loadCart());
+    }
+
+    loadCart();
+</script>
+{% endblock %}

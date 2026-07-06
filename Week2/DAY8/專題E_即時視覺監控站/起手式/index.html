@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>即時視覺監控站</title>
+  <style>
+    body { font-family:"Microsoft JhengHei",sans-serif; background:#0d0d0d; color:#eee; text-align:center; margin:0; padding:20px; }
+    h1 { font-weight:normal; }
+    #畫面 { max-width:95vw; border:2px solid #333; border-radius:8px; background:#000; }
+    #狀態 { margin-top:12px; color:#888; }
+    .live { color:#e53935; font-weight:bold; }
+  </style>
+</head>
+<body>
+  <h1><span class="live">● LIVE</span> 即時視覺監控站</h1>
+  <img id="畫面" alt="等待影像…">
+  <div id="狀態">連線中…</div>
+
+  <script>
+    const 畫面 = document.getElementById("畫面");
+    const 狀態 = document.getElementById("狀態");
+    let 張數 = 0;
+
+    function 連線() {
+      const proto = location.protocol === "https:" ? "wss" : "ws";
+      const ws = new WebSocket(`${proto}://${location.host}/ws`);
+
+      ws.onopen = () => 狀態.textContent = "已連線";
+      ws.onmessage = (e) => { 畫面.src = e.data; 張數++; };
+      ws.onclose = () => { 狀態.textContent = "斷線，3 秒後重連…"; setTimeout(連線, 3000); };
+    }
+    連線();
+
+    // 每秒算一次 FPS（TODO：可加濾鏡切換按鈕，用 ws.send 傳給 server）
+    setInterval(() => { 狀態.textContent = `即時中 · ${張數} fps`; 張數 = 0; }, 1000);
+  </script>
+</body>
+</html>

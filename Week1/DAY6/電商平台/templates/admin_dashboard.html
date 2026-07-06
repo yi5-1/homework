@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}後台儀表板{% endblock %}
+{% block content %}
+<section class="section">
+    <h1>📊 後台儀表板</h1>
+    <div id="stats-content">載入中...</div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    fetch('/api/admin/stats')
+        .then(r => r.json())
+        .then(data => {
+            const el = document.getElementById('stats-content');
+            if (!data.ok) {
+                el.innerHTML = `<div class="alert alert-error">${data.message}</div>`;
+                return;
+            }
+            el.innerHTML = `
+                <div class="stat-card">
+                    <h3>👥 註冊會員數</h3>
+                    <p class="stat-number">${data.total_users}</p>
+                </div>
+                <h3>會員消費排行</h3>
+                <table class="cart-table">
+                    <thead><tr><th>會員 ID</th><th>帳號</th><th>總消費金額</th></tr></thead>
+                    <tbody>
+                        ${data.user_spending.map(u => `
+                            <tr>
+                                <td>${u.user_id}</td>
+                                <td>${u.username}</td>
+                                <td>NT$ ${u.total_spent}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        });
+</script>
+{% endblock %}

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>多人射擊 Web</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100%; overflow: hidden;
+    background: #222; color: #fff;
+    font-family: 'Microsoft JhengHei', 'PingFang TC', 'Noto Sans TC', sans-serif;
+  }
+  canvas#game { display: block; cursor: crosshair; }
+
+  #lobby {
+    position: fixed; inset: 0; z-index: 10;
+    background: rgba(28, 30, 46, 0.98);
+    display: flex; align-items: center; justify-content: center;
+  }
+  #lobby.hidden { display: none; }
+  .card {
+    background: #1a1c2e; padding: 30px 40px; border-radius: 12px;
+    min-width: 420px; box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  .card h1 { text-align: center; margin: 0 0 20px; font-weight: bold; }
+  .row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .row label { min-width: 70px; }
+  .row input[type=text] {
+    flex: 1; padding: 10px; font-size: 16px;
+    border: 2px solid #444; border-radius: 4px;
+    background: #fff; color: #000;
+    font-family: inherit;
+  }
+  .row input[type=text]:focus { outline: none; border-color: #ffdc00; }
+  .picker { display: flex; gap: 8px; flex: 1; }
+  .picker .opt {
+    width: 60px; height: 60px;
+    background: #33364a; border: 3px solid #555;
+    border-radius: 6px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 30px; font-weight: bold;
+    transition: border-color 0.15s;
+  }
+  .picker .opt:hover { border-color: #888; }
+  .picker .opt.sel { border-color: #ffdc00; }
+  #connect-btn {
+    width: 100%; padding: 14px; margin-top: 8px;
+    font-size: 18px; font-weight: bold; font-family: inherit;
+    border: none; border-radius: 6px;
+    background: #34aa5b; color: white; cursor: pointer;
+  }
+  #connect-btn:hover { background: #40c46b; }
+  #connect-btn:disabled { background: #555; cursor: not-allowed; }
+  .hint { text-align: center; color: #888; margin-top: 12px; font-size: 13px; }
+
+  #chat-input {
+    position: fixed; bottom: 45px; right: 20px; width: 320px;
+    padding: 8px 10px; display: none; z-index: 5;
+    background: rgba(0, 0, 0, 0.75); color: #fff;
+    border: 1px solid #fff; outline: none;
+    font-family: inherit; font-size: 14px;
+  }
+
+  #banner {
+    position: fixed; top: 12px; left: 50%; transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.6); color: #ff6060;
+    padding: 8px 20px; border-radius: 8px;
+    display: none; font-weight: bold; z-index: 4;
+  }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<input id="chat-input" type="text" maxlength="80" autocomplete="off">
+<div id="banner"></div>
+
+<div id="lobby">
+  <div class="card">
+    <h1>加入遊戲</h1>
+    <div class="row">
+      <label>ID：</label>
+      <input id="id-input" type="text" maxlength="12" placeholder="輸入名字 (支援中文)" autocomplete="off">
+    </div>
+    <div class="row">
+      <label>造型：</label>
+      <div class="picker" id="shape-picker">
+        <div class="opt sel" data-v="circle">●</div>
+        <div class="opt" data-v="square">■</div>
+        <div class="opt" data-v="triangle">▲</div>
+      </div>
+    </div>
+    <div class="row">
+      <label>顏色：</label>
+      <div class="picker" id="color-picker">
+        <div class="opt sel" data-v="220,50,50"  style="background:rgb(220,50,50)"></div>
+        <div class="opt"     data-v="50,100,220" style="background:rgb(50,100,220)"></div>
+        <div class="opt"     data-v="50,200,80"  style="background:rgb(50,200,80)"></div>
+        <div class="opt"     data-v="240,220,60" style="background:rgb(240,220,60)"></div>
+        <div class="opt"     data-v="180,80,220" style="background:rgb(180,80,220)"></div>
+      </div>
+    </div>
+    <button id="connect-btn">連線 (Enter)</button>
+    <div class="hint">WASD 移動 · 按住左鍵射擊 · Enter 打字 · F11 全螢幕</div>
+  </div>
+</div>
+
+<script src="/static/game.js"></script>
+</body>
+</html>

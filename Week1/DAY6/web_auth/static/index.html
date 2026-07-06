@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>會員系統 (PostgreSQL)</title>
+<style>
+  body {
+    font-family: 'Microsoft JhengHei', sans-serif;
+    max-width: 420px; margin: 60px auto; padding: 20px;
+    background: #f2f4f8;
+  }
+  h1 { text-align: center; color: #333; margin-bottom: 20px; }
+  .tabs {
+    display: flex; gap: 4px; margin-bottom: 0;
+  }
+  .tabs button {
+    flex: 1; padding: 12px; border: none;
+    background: #ddd; color: #555; cursor: pointer;
+    font-size: 16px; font-family: inherit;
+    border-radius: 6px 6px 0 0;
+  }
+  .tabs button.active { background: white; color: #2a5cb5; font-weight: bold; }
+  .card {
+    background: white; padding: 25px 20px;
+    border-radius: 0 6px 6px 6px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  }
+  .card.hidden { display: none; }
+  input {
+    width: 100%; padding: 10px; margin: 6px 0;
+    box-sizing: border-box;
+    font-size: 15px; font-family: inherit;
+    border: 1px solid #ccc; border-radius: 4px;
+  }
+  input:focus { outline: none; border-color: #2a5cb5; }
+  button.primary {
+    width: 100%; padding: 12px; margin-top: 10px;
+    background: #2a5cb5; color: white;
+    border: none; border-radius: 4px;
+    font-size: 16px; font-family: inherit; cursor: pointer;
+  }
+  button.primary:hover { background: #3572d0; }
+  #結果 {
+    text-align: center; margin-top: 15px;
+    padding: 10px; border-radius: 4px;
+    min-height: 20px;
+  }
+  #結果.success { background: #e8f8ec; color: #1a7a35; }
+  #結果.error   { background: #fce8ea; color: #b8202f; }
+</style>
+</head>
+<body>
+
+<h1>會員系統</h1>
+
+<div class="tabs">
+  <button id="tab-reg"   class="active" onclick="切換('reg')">註冊</button>
+  <button id="tab-login"                onclick="切換('login')">登入</button>
+</div>
+
+<div id="card-reg" class="card">
+  <input id="reg-user" type="text"     placeholder="帳號" maxlength="20">
+  <input id="reg-pass" type="password" placeholder="密碼" maxlength="50">
+  <button class="primary" onclick="送出註冊()">送出註冊</button>
+</div>
+
+<div id="card-login" class="card hidden">
+  <input id="login-user" type="text"     placeholder="帳號" maxlength="20">
+  <input id="login-pass" type="password" placeholder="密碼" maxlength="50">
+  <button class="primary" onclick="送出登入()">送出登入</button>
+</div>
+
+<div id="結果"></div>
+
+<script>
+// ===== 切換註冊 / 登入 tab =====
+function 切換(which) {
+  document.getElementById('tab-reg').classList.toggle('active',   which === 'reg');
+  document.getElementById('tab-login').classList.toggle('active', which === 'login');
+  document.getElementById('card-reg').classList.toggle('hidden',   which !== 'reg');
+  document.getElementById('card-login').classList.toggle('hidden', which !== 'login');
+  顯示結果('', '');
+}
+
+function 顯示結果(text, kind) {
+  const el = document.getElementById('結果');
+  el.textContent = text;
+  el.className = kind;
+}
+
+// ===== 呼叫後端 API =====
+async function 呼叫API(url, body) {
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(body),
+  });
+  return { status: res.status, data: await res.json() };
+}
+
+async function 送出註冊() {
+  const username = document.getElementById('reg-user').value;
+  const password = document.getElementById('reg-pass').value;
+  const { data } = await 呼叫API('/api/register', { username, password });
+  if (data.ok) {
+    顯示結果(data.message, 'success');
+    document.getElementById('reg-user').value = '';
+    document.getElementById('reg-pass').value = '';
+  } else {
+    顯示結果(data.error, 'error');
+  }
+}
+
+async function 送出登入() {
+  const username = document.getElementById('login-user').value;
+  const password = document.getElementById('login-pass').value;
+  const { data } = await 呼叫API('/api/login', { username, password });
+  顯示結果(data.ok ? data.message : data.error, data.ok ? 'success' : 'error');
+}
+
+// Enter 送出
+document.getElementById('reg-pass').addEventListener('keydown',
+  (e) => { if (e.key === 'Enter' && !e.isComposing) 送出註冊(); });
+document.getElementById('login-pass').addEventListener('keydown',
+  (e) => { if (e.key === 'Enter' && !e.isComposing) 送出登入(); });
+</script>
+
+</body>
+</html>

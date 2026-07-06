@@ -1,0 +1,25 @@
+# 環境變數 — 含資料庫帳密、SECRET_KEY 等機敏資訊
+.env
+
+# Python 虛擬環境 / 位元組碼
+venv/
+__pycache__/
+*.py[cod]
+*.pyo
+
+# IDE / 編輯器設定
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 作業系統暫存檔
+Thumbs.db
+.DS_Store
+
+# Flask 預設暫存
+instance/
+
+# pip 鎖定檔（若有產生）
+requirements.lock

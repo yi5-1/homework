@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>Hello Web - 留言板</title>
+<style>
+  /* CSS：只是讓畫面好看一點，跟邏輯無關 */
+  body {
+    font-family: 'Microsoft JhengHei', sans-serif;
+    max-width: 520px; margin: 40px auto; padding: 20px;
+    background: #f5f5f5;
+  }
+  h1 { text-align: center; color: #333; }
+  .row { margin: 10px 0; }
+  input, button {
+    padding: 10px; font-size: 16px; font-family: inherit;
+    border: 1px solid #ccc; border-radius: 4px;
+  }
+  #name, #text { width: 100%; box-sizing: border-box; }
+  button {
+    background: #34aa5b; color: white; border: none; cursor: pointer;
+    padding: 10px 20px;
+  }
+  button:hover { background: #40c46b; }
+  #狀態 { color: #d33; min-height: 20px; margin: 8px 0; }
+  #messages {
+    background: white; border-radius: 6px; padding: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  .msg { border-bottom: 1px solid #eee; padding: 8px 4px; }
+  .msg:last-child { border-bottom: none; }
+  .msg .name { font-weight: bold; color: #2a5cb5; }
+  .msg .time { color: #aaa; font-size: 12px; float: right; }
+</style>
+</head>
+<body>
+
+<!-- ===== 標籤 (Label) 顯示標題 ===== -->
+<h1>Hello World 留言板</h1>
+
+<!-- ===== 輸入框 (Input) ===== -->
+<div class="row">
+  <input id="name" type="text" placeholder="你的名字（可留空）" maxlength="20">
+</div>
+<div class="row">
+  <input id="text" type="text" placeholder="輸入訊息..." maxlength="200">
+</div>
+
+<!-- ===== 按鈕 (Button) ===== -->
+<div class="row">
+  <button onclick="送出訊息()">送出</button>
+  <button onclick="更新列表()">重新整理</button>
+</div>
+
+<!-- 狀態訊息顯示 -->
+<div id="狀態"></div>
+
+<!-- ===== 訊息列表區（會被 JS 動態填入內容）===== -->
+<div id="messages">載入中...</div>
+
+
+<script>
+// =============================================
+// 前端 JS 邏輯
+// 重點：fetch() 用來跟後端說話（送 request / 收 response）
+// =============================================
+
+async function 送出訊息() {
+  const 名字 = document.getElementById('name').value;
+  const 內容 = document.getElementById('text').value;
+
+  if (!內容.trim()) {
+    document.getElementById('狀態').textContent = '訊息不能是空的';
+    return;
+  }
+
+  // 發送 POST 請求給後端 /api/messages
+  // 用 JSON 格式打包資料
+  const res = await fetch('/api/messages', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ name: 名字, text: 內容 })
+  });
+
+  if (res.ok) {
+    document.getElementById('text').value = '';   // 清空輸入框
+    document.getElementById('狀態').textContent = '送出成功！';
+    await 更新列表();                              // 立刻重新載入
+  } else {
+    document.getElementById('狀態').textContent = '送出失敗';
+  }
+}
+
+async function 更新列表() {
+  // GET 請求：從後端拉回全部訊息
+  const res = await fetch('/api/messages');
+  const 訊息陣列 = await res.json();
+
+  const 容器 = document.getElementById('messages');
+  容器.innerHTML = '';    // 先清空
+
+  if (訊息陣列.length === 0) {
+    容器.textContent = '（還沒有留言，快來當第一個！）';
+    return;
+  }
+
+  // 把每一筆訊息畫成一個 div
+  for (const m of 訊息陣列) {
+    const div = document.createElement('div');
+    div.className = 'msg';
+    div.innerHTML =
+      `<span class="time">${escapeHtml(m.created_at)}</span>` +
+      `<span class="name">${escapeHtml(m.name)}</span>：${escapeHtml(m.text)}`;
+    容器.appendChild(div);
+  }
+}
+
+// 使用者輸入的東西可能有 <script>，用這個函式把特殊符號轉掉，避免 XSS
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g,
+    c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// 頁面一打開就先載一次列表
+更新列表();
+
+// 在輸入框裡按 Enter 也送出
+document.getElementById('text').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.isComposing) 送出訊息();
+});
+</script>
+
+</body>
+</html>

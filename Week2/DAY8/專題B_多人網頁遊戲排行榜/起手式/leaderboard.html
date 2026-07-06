@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>排行榜</title>
+  <style>
+    body { font-family: "Microsoft JhengHei", sans-serif; background:#1a1a2e; color:#eee; max-width:640px; margin:40px auto; padding:0 16px; }
+    h1 { text-align:center; }
+    table { width:100%; border-collapse:collapse; margin-top:16px; }
+    th, td { padding:10px 14px; text-align:left; border-bottom:1px solid #333; }
+    th { color:#4C72B0; }
+    tr:nth-child(1) td { color:#f5c518; font-weight:bold; }  /* 冠軍金色 */
+    .panel { margin-top:24px; padding:16px; background:#16213e; border-radius:8px; }
+    input, button { padding:8px; border-radius:6px; border:1px solid #444; background:#0f1626; color:#eee; }
+    button { background:#4C72B0; cursor:pointer; border:none; }
+  </style>
+</head>
+<body>
+  <h1>🏆 擊殺排行榜</h1>
+  <table>
+    <thead><tr><th>#</th><th>玩家</th><th>擊殺數</th></tr></thead>
+    <tbody id="rows"><tr><td colspan="3">載入中…</td></tr></tbody>
+  </table>
+
+  <!-- 這個面板只是方便測試：正式版分數要由「遊戲 server」在玩家陣亡時寫入 -->
+  <div class="panel">
+    <h3>手動送測試成績</h3>
+    <input id="name" placeholder="玩家名">
+    <input id="kills" type="number" placeholder="擊殺數" style="width:100px">
+    <button onclick="送出()">送出</button>
+  </div>
+
+  <script>
+    async function 更新排行榜() {
+      const res = await fetch("/api/leaderboard");
+      const 榜 = await res.json();
+      const tbody = document.getElementById("rows");
+      if (!榜.length) { tbody.innerHTML = "<tr><td colspan='3'>還沒有成績</td></tr>"; return; }
+      tbody.innerHTML = 榜.map((r, i) =>
+        `<tr><td>${i + 1}</td><td>${r.name}</td><td>${r.kills}</td></tr>`).join("");
+    }
+
+    async function 送出() {
+      const name = document.getElementById("name").value;
+      const kills = Number(document.getElementById("kills").value) || 0;
+      await fetch("/api/score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, kills })
+      });
+      更新排行榜();
+    }
+
+    更新排行榜();
+    setInterval(更新排行榜, 3000);  // 每 3 秒自動刷新
+  </script>
+</body>
+</html>

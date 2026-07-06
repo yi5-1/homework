@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}全部商品{% endblock %}
+{% block content %}
+<section class="section">
+    <h1>全部商品</h1>
+    <div class="product-grid" id="all-products"></div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    fetch('/api/products')
+        .then(r => r.json())
+        .then(data => {
+            const grid = document.getElementById('all-products');
+            if (!data.ok || data.products.length === 0) {
+                grid.innerHTML = '<p>目前沒有商品</p>';
+                return;
+            }
+            grid.innerHTML = data.products.map(p => `
+                <div class="product-card">
+                    <div class="product-img">📦</div>
+                    <h3>${p.name}</h3>
+                    <p>${p.description || ''}</p>
+                    <p class="price">NT$ ${p.price}</p>
+                    <p class="stock">庫存: ${p.stock}</p>
+                    <button class="btn btn-primary" onclick="addToCart(${p.id})">加入購物車</button>
+                </div>
+            `).join('');
+        });
+</script>
+{% endblock %}
