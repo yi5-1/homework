@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>歌曲查詢 - 日文歌詞翻譯</title>
+<style>
+  :root {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Microsoft JhengHei",
+      "Heiti TC", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 16px;
+    max-width: 720px;
+    margin-inline: auto;
+    background: #faf7f2;
+    color: #2a2a2a;
+  }
+  h1 { font-size: 1.3rem; margin: 0 0 12px; }
+  .row { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+  input[type="text"] {
+    flex: 1;
+    min-width: 120px;
+    padding: 10px 12px;
+    font-size: 16px; /* 16px 以上 iOS Safari 才不會自動放大畫面 */
+    border: 1px solid #ccc;
+    border-radius: 8px;
+  }
+  button {
+    padding: 10px 16px;
+    font-size: 15px;
+    border: none;
+    border-radius: 8px;
+    background: #d97757;
+    color: #fff;
+    cursor: pointer;
+  }
+  button:disabled { background: #ccc; cursor: not-allowed; }
+  button.secondary { background: #6b7280; }
+  #results {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 16px;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  #results li {
+    background: #fff;
+    padding: 10px 12px;
+    border-bottom: 1px solid #eee;
+  }
+  #results li:active { background: #f0e9df; }
+  #results .song { font-weight: 600; }
+  #results .artist { font-size: 0.85rem; color: #666; }
+  textarea {
+    width: 100%;
+    min-height: 200px;
+    font-size: 15px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    resize: vertical;
+    line-height: 1.6;
+  }
+  label { font-weight: 600; display: block; margin: 14px 0 4px; }
+  #status { color: #b45309; min-height: 1.4em; margin: 8px 0; font-size: 0.9rem; }
+</style>
+</head>
+<body>
+
+<h1>🎵 歌曲查詢 - 日文歌詞翻譯</h1>
+
+<div class="row">
+  <input type="text" id="song" placeholder="歌名（必填）">
+</div>
+<div class="row">
+  <input type="text" id="artist" placeholder="歌手（選填，縮小範圍）">
+  <button id="btn-search">搜尋</button>
+</div>
+
+<div id="status"></div>
+
+<ul id="results"></ul>
+
+<label for="original">原文歌詞</label>
+<textarea id="original" placeholder="點選上方搜尋結果載入歌詞"></textarea>
+
+<div class="row" style="margin-top:8px;">
+  <button id="btn-translate">翻譯成中文</button>
+</div>
+
+<label for="translation">中文翻譯</label>
+<textarea id="translation" placeholder="按「翻譯成中文」自動產生，也可以自己編輯"></textarea>
+
+<div class="row" style="margin-top:8px;">
+  <button id="btn-export" class="secondary">匯出成 .txt</button>
+</div>
+
+<script>
+const 狀態 = document.getElementById("status");
+const 結果清單 = document.getElementById("results");
+const 原文框 = document.getElementById("original");
+const 翻譯框 = document.getElementById("translation");
+
+let 目前歌名 = "";
+let 目前歌手 = "";
+
+function 顯示狀態(文字, 是否錯誤 = false) {
+  狀態.textContent = 文字;
+  狀態.style.color = 是否錯誤 ? "#c0392b" : "#b45309";
+}
+
+async function 呼叫API(網址, 選項) {
+  const 回應 = await fetch(網址, 選項);
+  const 資料 = await 回應.json();
+  if (!回應.ok) throw new Error(資料.error || `發生錯誤（${回應.status}）`);
+  return 資料;
+}
+
+document.getElementById("btn-search").addEventListener("click", async () => {
+  const 歌名 = document.getElementById("song").value.trim();
+  const 歌手 = document.getElementById("artist").value.trim();
+  if (!歌名) {
+    顯示狀態("請先輸入歌名", true);
+    return;
+  }
+
+  顯示狀態("搜尋中...");
+  結果清單.innerHTML = "";
+
+  try {
+    const 網址 = `/api/search?song=${encodeURIComponent(歌名)}&artist=${encodeURIComponent(歌手)}`;
+    const 結果 = await 呼叫API(網址);
+
+    if (結果.length === 0) {
+      顯示狀態("找不到符合的歌曲，換個關鍵字試試");
+      return;
+    }
+
+    結果.forEach((項目) => {
+      const li = document.createElement("li");
+      li.innerHTML = `<div class="song">${項目.title}</div><div class="artist">${項目.artist}</div>`;
+      li.addEventListener("click", () => 載入歌詞(項目));
+      結果清單.appendChild(li);
+    });
+    顯示狀態(`找到 ${結果.length} 筆結果，點一首載入歌詞`);
+  } catch (錯誤) {
+    顯示狀態(錯誤.message, true);
+  }
+});
+
+async function 載入歌詞(項目) {
+  顯示狀態(`載入「${項目.title}」歌詞中...`);
+  try {
+    const 網址 = `/api/lyrics?url=${encodeURIComponent(項目.url)}`;
+    const 資料 = await 呼叫API(網址);
+    目前歌名 = 資料.title;
+    目前歌手 = 資料.artist;
+    原文框.value = 資料.lyrics;
+    翻譯框.value = "";
+    顯示狀態(`已載入《${資料.title}》- ${資料.artist}`);
+  } catch (錯誤) {
+    顯示狀態(錯誤.message, true);
+  }
+}
+
+document.getElementById("btn-translate").addEventListener("click", async () => {
+  const 歌詞 = 原文框.value.trim();
+  if (!歌詞) {
+    顯示狀態("還沒有載入任何歌詞", true);
+    return;
+  }
+
+  const 按鈕 = document.getElementById("btn-translate");
+  按鈕.disabled = true;
+  顯示狀態("翻譯中...");
+
+  try {
+    const 資料 = await 呼叫API("/api/translate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ lyrics: 原文框.value }),
+    });
+    翻譯框.value = 資料.translation;
+    顯示狀態("翻譯完成，可以自行微調後再匯出");
+  } catch (錯誤) {
+    顯示狀態(錯誤.message, true);
+  } finally {
+    按鈕.disabled = false;
+  }
+});
+
+document.getElementById("btn-export").addEventListener("click", async () => {
+  if (!原文框.value.trim()) {
+    顯示狀態("還沒有載入任何歌詞，無法匯出", true);
+    return;
+  }
+
+  顯示狀態("匯出中...");
+  try {
+    const 回應 = await fetch("/api/export", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: 目前歌名,
+        artist: 目前歌手,
+        lyrics: 原文框.value,
+        translation: 翻譯框.value,
+      }),
+    });
+    if (!回應.ok) {
+      const 資料 = await 回應.json();
+      throw new Error(資料.error || "匯出失敗");
+    }
+
+    const 檔案內容 = await 回應.blob();
+    const 下載網址 = URL.createObjectURL(檔案內容);
+    const a = document.createElement("a");
+    a.href = 下載網址;
+    a.download = `${目前歌名 || "歌詞"}_${目前歌手 || ""}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(下載網址);
+    顯示狀態("已下載！在 iPhone 上可在「檔案」App 或分享選單另存");
+  } catch (錯誤) {
+    顯示狀態(錯誤.message, true);
+  }
+});
+</script>
+
+</body>
+</html>

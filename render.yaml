@@ -1,0 +1,10 @@
+services:
+  - name: song-lyrics-translator
+    type: web
+    runtime: python
+    rootDir: 歌曲查詢_網頁版
+    buildCommand: pip install -r requirements.txt
+    startCommand: python server.py
+    envVars:
+      - key: DEEPL_API_KEY
+        sync: false

@@ -1,0 +1,55 @@
+# DAY9 環境需求
+#
+# ================================================================
+# ⚠ Python 版本必須是 3.9 ~ 3.13（不能用 3.14 或更新）
+# ================================================================
+# TensorFlow 官方 wheel 目前最高只出到 Python 3.13。
+# 你的 Python 是 3.14 或更新的話，直接跑 pip install 會看到：
+#   ERROR: Could not find a version that satisfies the requirement tensorflow
+# 唯一解決辦法：另外建一個 Python 3.11 的 conda 環境（推薦 3.11，最穩）：
+#
+#   conda create -n STUSTPython python=3.11 -y
+#   conda activate STUSTPython
+#   cd Week2\DAY9
+#   pip install -r requirements.txt
+#
+# 之後 VS Code 右下角切到 STUSTPython 那個直譯器。
+#
+# ================================================================
+# 標準安裝
+# ================================================================
+# pip install -r requirements.txt
+#
+# ================================================================
+# 為什麼要用 tf-keras？
+# ================================================================
+# Teachable Machine 匯出的 .h5 是舊格式，Keras 3 (TF 2.16+ 自帶) 不接受。
+# tf-keras 是 Keras 2 相容層，搭配環境變數 TF_USE_LEGACY_KERAS=1 就能繼續讀。
+# → 這樣不用死鎖 TF 2.15，Python 3.9 ~ 3.13 都能跑
+# → 03/06 腳本已經在檔案最上面設定好那個環境變數
+#
+# ================================================================
+# 常見錯誤處理
+# ================================================================
+#
+# [Q1] 「Could not find a version that satisfies the requirement tensorflow」
+#      → 你的 Python 太新（3.14+）或太舊（3.8 以下）。
+#        解法：用上面的 conda 指令重建一個 Python 3.11 的環境
+#
+# [Q2] 「opencv-contrib-python 5.0.0.93 requires numpy>=2, but you have numpy 1.26.4」
+#      → 舊 numpy 卡住了。跑一次：
+#            pip install --upgrade numpy
+#        或者強制更新整包：
+#            pip install --upgrade -r requirements.txt
+#
+# [Q3] 「DepthwiseConv2D groups」或 Sequential 相關錯誤
+#      → 環境變數沒生效。確認 03/06 腳本裡最上方有
+#            os.environ["TF_USE_LEGACY_KERAS"] = "1"
+#        且它是在 import tensorflow 之前
+
+tensorflow
+tf-keras          # Keras 2 相容層，讀 TM 舊 h5 必備
+opencv-python
+pillow
+numpy
+matplotlib
